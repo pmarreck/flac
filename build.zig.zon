@@ -24,8 +24,8 @@
     // internet connectivity.
     .dependencies = .{
         .flac = .{
-            .url = "git+https://github.com/xiph/flac#f2965d2c0de89c03c11144c912737ee0ffcc91ac",
-            .hash = "122095d9c861456db8a85f517ea5daa6c8801776768f4dc86fd02e39a89ffca08028",
+            .url = "https://github.com/xiph/flac/archive/f2965d2c0de89c03c11144c912737ee0ffcc91ac.tar.gz",
+            .hash = "N-V-__8AAJYaRQCV2chhRW24qF9RfqXapsiAF3Z2j03Ib9Au",
         },
     },
     .paths = .{
