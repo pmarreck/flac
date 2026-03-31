@@ -18,7 +18,7 @@ pub fn build(b: *std.Build) void {
             .ENABLE_64_BIT_WORDS = t.ptrBitWidth() == 64,
             .FLAC__ALIGN_MALLOC_DATA = t.cpu.arch.isX86(),
             .FLAC__CPU_ARM64 = t.cpu.arch.isAARCH64(),
-            .FLAC__SYS_DARWIN = t.isDarwin(),
+            .FLAC__SYS_DARWIN = t.os.tag.isDarwin(),
             .FLAC__SYS_LINUX = t.os.tag == .linux,
             .HAVE_BYTESWAP_H = t.os.tag == .linux,
             .HAVE_CPUID_H = t.cpu.arch.isX86(),
