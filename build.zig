@@ -38,24 +38,27 @@ pub fn build(b: *std.Build) void {
         },
     );
 
-    const lib = b.addStaticLibrary(.{
+    const lib = b.addLibrary(.{
         .name = "flac",
-        .target = target,
-        .optimize = optimize,
+        .linkage = .static,
+        .root_module = b.createModule(.{
+            .target = target,
+            .optimize = optimize,
+            .link_libc = true,
+        }),
     });
-    lib.linkLibC();
-    lib.defineCMacro("HAVE_CONFIG_H", null);
-    lib.addConfigHeader(config_header);
-    lib.addIncludePath(flac_dep.path("include"));
-    lib.addIncludePath(flac_dep.path("src/libFLAC/include"));
-    lib.addCSourceFiles(.{
+    lib.root_module.addCMacro("HAVE_CONFIG_H", "");
+    lib.root_module.addConfigHeader(config_header);
+    lib.root_module.addIncludePath(flac_dep.path("include"));
+    lib.root_module.addIncludePath(flac_dep.path("src/libFLAC/include"));
+    lib.root_module.addCSourceFiles(.{
         .root = flac_dep.path("."),
         .files = sources,
         .flags = &.{},
     });
     if (t.os.tag == .windows) {
-        lib.defineCMacro("FLAC__NO_DLL", null);
-        lib.addCSourceFiles(.{
+        lib.root_module.addCMacro("FLAC__NO_DLL", "");
+        lib.root_module.addCSourceFiles(.{
             .root = flac_dep.path("."),
             .files = sources_windows,
             .flags = &.{},
