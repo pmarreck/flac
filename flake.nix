@@ -15,13 +15,32 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
         zig = zig-overlay.packages.${system}."0.16.0";
+
+        # Fixed-output derivation that pre-fetches all Zig deps (e.g. xiph/flac
+        # tarball via `b.dependency("flac", ...)`). This is the only step with
+        # network access; the consumer derivation builds offline.
+        # To recompute: set zigDepsHash = ""; run `nix build`; copy printed hash.
+        zigDepsHash = "sha256-HYz5lvLqj+j29eDKWa6Q/ew7V5tNB72CRWnNakmQV98=";
+
+        zigDeps = pkgs.stdenv.mkDerivation {
+          pname = "flac-zig-deps";
+          version = "0.1.0";
+          src = ./.;
+          nativeBuildInputs = [ zig pkgs.git pkgs.cacert ];
+          outputHashMode = "recursive";
+          outputHashAlgo = "sha256";
+          outputHash = zigDepsHash;
+          buildPhase = ''
+            export HOME=$TMPDIR
+            export ZIG_GLOBAL_CACHE_DIR=$out
+            export SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
+            export GIT_SSL_CAINFO=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
+            zig build --fetch=all
+          '';
+          dontInstall = true;
+          dontFixup = true;
+        };
       in {
-        # NOTE: build.zig pulls libFLAC sources via `b.dependency("flac", ...)`
-        # which `zig fetch`es a tarball from xiph/flac. The Nix sandbox blocks
-        # network access — a fully-sandboxed Nix build will need a fixed-output
-        # `zigDeps` derivation (see CLAUDE.md fix-zig-deps-hash pattern).
-        # For now this flake works in `dev-shell`; full sandboxed `nix build`
-        # is a follow-up.
         packages.default = pkgs.stdenv.mkDerivation {
           pname = "flac";
           version = "0.1.0";
@@ -32,6 +51,8 @@
             export HOME=$TMPDIR
             export ZIG_GLOBAL_CACHE_DIR=$TMPDIR/zig-cache
             mkdir -p "$ZIG_GLOBAL_CACHE_DIR"
+            cp -r ${zigDeps}/* $ZIG_GLOBAL_CACHE_DIR/
+            chmod -R u+w $ZIG_GLOBAL_CACHE_DIR
             zig build -Doptimize=ReleaseFast --prefix $out
           '';
           installPhase = "true";
