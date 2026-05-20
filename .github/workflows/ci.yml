@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            name: macOS ARM
+          - os: ubuntu-latest
+            name: Linux Intel
+          - os: ubuntu-24.04-arm
+            name: Linux ARM
+          - os: windows-latest
+            name: Windows Intel
+
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: 0.16.0
+
+      - name: Build static library
+        run: zig build
+      # Note: this project is a vendored upstream wrapper (xiph/flac C
+      # sources fetched via build.zig.zon + zig build) that produces a
+      # static lib + headers; there is no `zig build test` step.
+      # Build success is the CI signal.
